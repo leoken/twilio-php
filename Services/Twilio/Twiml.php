@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Excepttion class for Services_Twilio_Twiml.
+ * Exception class for Services_Twilio_Twiml.
  */
 class Services_Twilio_TwimlException extends Exception {}
 
@@ -79,10 +79,40 @@ class Services_Twilio_Twiml
         if (is_array($noun)) {
             list($attrs, $noun) = array($noun, '');
         }
+        /* addChild does not escape XML, while addAttribute does. This means if 
+         * you pass unescaped ampersands ("&") to addChild, you will generate 
+         * an error. 
+         *
+         * Some inexperienced developers will pass in unescaped ampersands, and 
+         * we want to make their code work, by escaping the ampersands for them 
+         * before passing the string to addChild. (with htmlentities)
+         *
+         * However other people will know what to do, and their code 
+         * already escapes ampersands before passing them to addChild. We don't 
+         * want to break their existing code by turning their &amp;'s into 
+         * &amp;amp;
+         *
+         * We also want to use numeric entities, not named entities so that we
+         * are fully compatible with XML
+         *
+         * The following lines accomplish the desired behavior.
+         */
+        $decoded = html_entity_decode($noun, ENT_COMPAT, 'UTF-8');
+        $normalized = htmlspecialchars($decoded, ENT_COMPAT, 'UTF-8', false);
         $child = empty($noun)
             ? $this->element->addChild(ucfirst($verb))
-            : $this->element->addChild(ucfirst($verb), $noun);
+            : $this->element->addChild(ucfirst($verb), $normalized);
         foreach ($attrs as $name => $value) {
+            /* Note that addAttribute escapes raw ampersands by default, so we 
+             * haven't touched its implementation. So this is the matrix for 
+             * addAttribute:
+             *
+             * & turns into &amp;
+             * &amp; turns into &amp;amp;
+             */
+            if (is_bool($value)) {
+                $value = ($value === true) ? 'true' : 'false';
+            }
             $child->addAttribute($name, $value);
         }
         return new self($child);
@@ -95,6 +125,9 @@ class Services_Twilio_Twiml
      */
     public function __toString()
     {
-        return $this->element->asXml();
+        $xml = $this->element->asXml();
+        return str_replace(
+            '<?xml version="1.0"?>', 
+            '<?xml version="1.0" encoding="UTF-8"?>', $xml);
     }
 }

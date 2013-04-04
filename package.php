@@ -9,7 +9,7 @@
  *
  * LICENSE:
  *
- * Copyright 2011 Twilio.
+ * Copyright 2012 Twilio.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,24 @@
  * @category  Services
  * @package   Services_Twilio
  * @author    Neuman Vong <neuman@twilio.com>
- * @copyright 2011 Twilio
+ * @copyright 2012 Twilio
  * @license   http://creativecommons.org/licenses/MIT/
  * @link      http://pear.php.net/package/Services_Twilio
  */
 
+error_reporting(E_ALL & ~E_DEPRECATED);
 require_once 'PEAR/PackageFileManager2.php';
 PEAR::setErrorHandling(PEAR_ERROR_DIE);
 
-$api_version     = '0.0.2';
-$api_state       = 'alpha';
+$api_version     = '3.10.0';
+$api_state       = 'stable';
 
-$release_version = '0.0.2';
-$release_state   = 'alpha';
-$release_notes   = "No release notes.";
+$release_version = '3.10.0';
+$release_state   = 'stable';
+$release_notes   = 'Use HTTP status code for error reporting';
 
 $description = <<<DESC
-A SDK (or helper library, as we're calling them) for PHP developers to write 
+A SDK (or helper library, as we're calling them) for PHP developers to write
 applications against Twilio's REST API and generate TwiML responses.
 DESC;
 
@@ -61,7 +62,12 @@ $package->setOptions(
         ),
         'ignore'                  => array(
             'package.php',
-            '*.tgz'
+            '*.tgz',
+            'scratch/*',
+            'vendor/*',
+            'composer.*',
+            'coverage/*',
+            '.travis.yml',
         )
     )
 );
@@ -69,7 +75,7 @@ $package->setOptions(
 $package->setPackage('Services_Twilio');
 $package->setSummary('PHP helper library for Twilio');
 $package->setDescription($description);
-$package->setChannel('pear.php.net');
+$package->setChannel('twilio.github.com/pear');
 $package->setPackageType('php');
 $package->setLicense(
     'MIT License',
@@ -84,21 +90,21 @@ $package->setAPIStability($api_state);
 
 $package->addMaintainer(
     'lead',
-    'luciferous',
-    'Neuman Vong',
-    'neuman+pear@twilio.com'
+    'kevinburke',
+    'Kevin Burke',
+    'kevin@twilio.com'
 );
+
 
 $package->setPhpDep('5.2.1');
 
-$package->addPackageDepWithChannel('required', 'HTTP_Request2', 'pear.php.net');
 $package->addPackageDepWithChannel('optional', 'Mockery', 'pear.survivethedeepend.com');
 
-$package->setPearInstallerDep('1.7.0');
+$package->setPearInstallerDep('1.9.3');
 $package->generateContents();
 $package->addRelease();
 
-if (   isset($_GET['make'])
+if (isset($_GET['make'])
     || (isset($_SERVER['argv']) && @$_SERVER['argv'][1] == 'make')
 ) {
     $package->writePackageFile();
@@ -106,4 +112,3 @@ if (   isset($_GET['make'])
     $package->debugPackageFile();
 }
 
-?>
